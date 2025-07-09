@@ -1,0 +1,11 @@
+name: 🧪 Dummy Strategist Deploy Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: ✅ Dummy Step
+      run: echo "🎯 GitHub Actions is working!"
