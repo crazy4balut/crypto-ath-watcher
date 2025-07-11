@@ -12,6 +12,8 @@ RestartSec=10
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=ath-watcher
+StandardOutput=append:/home/pi/ath_watcher/logs/output.log
+StandardError=append:/home/pi/ath_watcher/logs/error.log
 
 [Install]
 WantedBy=multi-user.target
