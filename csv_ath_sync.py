@@ -9,19 +9,25 @@ DROPBOX_CMD = "/home/pi/Dropbox-Uploader/dropbox_uploader.sh"
 DROPBOX_PATH = "/crypto_exports/latest.csv"
 LOCAL_PATH = "/home/pi/crypto_exports/latest.csv"
 CACHE_PATH = "/home/pi/crypto_exports/logo_cache.json"
+ATH_MEMORY_PATH = "/home/pi/crypto_exports/ath_memory.json"
 TELEGRAM_BOT_TOKEN = os.getenv("TG_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TG_CHAT_ID")
 
 # Load or initialize logo cache
 def load_logo_cache():
-    if os.path.exists(CACHE_PATH):
-        with open(CACHE_PATH, "r") as f:
-            return json.load(f)
-    return {}
+    return json.load(open(CACHE_PATH)) if os.path.exists(CACHE_PATH) else {}
 
 def save_logo_cache(cache):
     with open(CACHE_PATH, "w") as f:
         json.dump(cache, f)
+
+# Load or initialize ATH memory
+def load_ath_memory():
+    return json.load(open(ATH_MEMORY_PATH)) if os.path.exists(ATH_MEMORY_PATH) else {}
+
+def save_ath_memory(memory):
+    with open(ATH_MEMORY_PATH, "w") as f:
+        json.dump(memory, f)
 
 # Logo fetcher (LogoKit fallback)
 def get_logo_url(symbol, cache):
@@ -29,34 +35,33 @@ def get_logo_url(symbol, cache):
     if symbol in cache:
         return cache[symbol]
 
-    # Try LogoKit
     logo_url = f"https://img.logokit.com/token/{symbol}"
-    test = requests.get(logo_url)
-    if test.status_code == 200:
+    if requests.get(logo_url).status_code == 200:
         cache[symbol] = logo_url
         return logo_url
 
-    # Fallback: monogram or skip
     cache[symbol] = None
     return None
 
 # Telegram alert with logo
 def send_logo_alert(symbol, ath, logo_url):
     if logo_url:
-        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
-        payload = {
-            "chat_id": TELEGRAM_CHAT_ID,
-            "photo": logo_url,
-            "caption": f"🚀 {symbol} hit a new ATH: {ath:.4f}"
-        }
-        requests.post(url, json=payload)
+        requests.post(
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto",
+            json={
+                "chat_id": TELEGRAM_CHAT_ID,
+                "photo": logo_url,
+                "caption": f"🚀 {symbol} hit a new ATH: {ath:.4f}"
+            }
+        )
     else:
-        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-        payload = {
-            "chat_id": TELEGRAM_CHAT_ID,
-            "text": f"🚀 {symbol} hit a new ATH: {ath:.4f} (no logo found)"
-        }
-        requests.post(url, json=payload)
+        requests.post(
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+            json={
+                "chat_id": TELEGRAM_CHAT_ID,
+                "text": f"🚀 {symbol} hit a new ATH: {ath:.4f} (no logo found)"
+            }
+        )
 
 def main():
     print("🔄 Syncing CSV from Dropbox...")
@@ -70,13 +75,19 @@ def main():
         high = coin_df['amount'].max()
         aths[symbol] = high
 
-    print("🖼️ Fetching logos and sending alerts...")
-    cache = load_logo_cache()
-    for symbol, ath in aths.items():
-        logo_url = get_logo_url(symbol, cache)
-        send_logo_alert(symbol, ath, logo_url)
+    print("🧠 Comparing with ATH memory...")
+    ath_memory = load_ath_memory()
+    logo_cache = load_logo_cache()
 
-    save_logo_cache(cache)
+    for symbol, ath in aths.items():
+        prev_ath = ath_memory.get(symbol, 0)
+        if ath > prev_ath:
+            logo_url = get_logo_url(symbol, logo_cache)
+            send_logo_alert(symbol, ath, logo_url)
+            ath_memory[symbol] = ath
+
+    save_logo_cache(logo_cache)
+    save_ath_memory(ath_memory)
 
 if __name__ == "__main__":
     main()
