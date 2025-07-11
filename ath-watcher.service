@@ -1,0 +1,17 @@
+[Unit]
+Description=Crypto ATH Watcher with Logo Alerts
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/pi/ath_watcher/csv_ath_sync.py
+WorkingDirectory=/home/pi/ath_watcher
+EnvironmentFile=/home/pi/ath_watcher/.env
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ath-watcher
+
+[Install]
+WantedBy=multi-user.target
