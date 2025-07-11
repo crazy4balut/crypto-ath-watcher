@@ -1,0 +1,17 @@
+[Unit]
+Description=Strategist Bot ATH Sync
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/pi/strategist_bot/ath_module.py
+WorkingDirectory=/home/pi/strategist_bot
+EnvironmentFile=/home/pi/strategist_bot/.env
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ath-watcher
+
+[Install]
+WantedBy=multi-user.target
