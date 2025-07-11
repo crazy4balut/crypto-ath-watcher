@@ -1,7 +1,7 @@
 from telegram.ext import Updater, MessageHandler, Filters
 
 # Replace this with the token you got from @BotFather
-BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE'
+BOT_TOKEN = '7978425099:AAF9oQOF6-8GgzQkc1P0aOClMY-xdGlqeNI'
 
 def handle_message(update, context):
 chat = update.effective_chat
